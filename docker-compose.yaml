@@ -1,0 +1,33 @@
+version: '3.1'
+services:
+  app:
+    container_name: account_module
+    image: accountdemo
+    build: ./
+    ports:
+      - "9090:8080"
+    depends_on:
+      - postgresqldb
+      - rabbitmq
+  postgresqldb:
+    image: postgres
+    ports:
+      - "5431:5432"
+    environment:
+      - POSTGRES_PASSWORD=account
+      - POSTGRES_USER=account
+      - POSTGRES_DB=accounts_module_db
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+          RABBITMQ_DEFAULT_VHOST: dev
+          RABBITMQ_USE_LONGNAME: "false"
+          RABBITMQ_ERLANG_COOKIE: "12345"
+          RABBITMQ_NODENAME: "rabbit@rabbitmq"
+    networks:
+          - default
