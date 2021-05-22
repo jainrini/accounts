@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mb.module.dao.TransactionDao">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO accounts.account_transaction(account_id,
+                                                 direction_code,
+                                                 currency_code,
+                                                 amount,
+                                                 description,
+                                                 initial_balance_amount,
+                                                 balance_after_transaction)
+        VALUES (#{accountId},
+                #{directionCode},
+                #{currencyCode},
+                #{amount},
+                #{description},
+                #{initialBalanceAmount},
+                #{balanceAfterTransaction})
+    </insert>
+    <select id="findById" resultType="Transaction">
+        SELECT id,
+            description,
+            account_id as "accountId",
+            currency_code as "currencyCode",
+            direction_code as "directionCode",
+            initial_balance_amount as "initialBalanceAmount",
+            balance_after_transaction as "balanceAfterTransaction"
+        FROM accounts.account_transaction a
+        WHERE a.account_id = #{accountId}
+    </select>
+</mapper>

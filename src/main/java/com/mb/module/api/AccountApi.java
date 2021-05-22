@@ -1,22 +1,33 @@
 package com.mb.module.api;
 
-import com.mb.module.config.MessagingConfig;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.mb.module.dto.Account;
+import com.mb.module.dto.AccountCreationDto;
+import com.mb.module.exceptions.ApiException;
+import com.mb.module.service.AccountService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/account")
+@RequestMapping("/api")
 public class AccountApi {
 
-    @Autowired
-    private RabbitTemplate template;
+    private final AccountService accountService;
 
-    @GetMapping("/details")
-    public String getAccountDetails() {
-        template.convertAndSend(MessagingConfig.EXCHANGE, MessagingConfig.ROUTING_KEY, "HI");
-        return "Hello Account";
+    public AccountApi(AccountService accountService) {
+        this.accountService = accountService;
+    }
+
+    @PostMapping("/account-create")
+    public Account createAccounts(@RequestBody AccountCreationDto dto) {
+        return accountService.createAccount(dto);
+    }
+
+    @GetMapping("/account")
+    public Account getAccountById(@RequestParam Integer accountId) throws ApiException {
+        return accountService.getAccountById(accountId);
     }
 }

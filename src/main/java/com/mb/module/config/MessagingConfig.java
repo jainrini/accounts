@@ -15,9 +15,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MessagingConfig {
 
-    public static final String QUEUE = "javatechie_queue";
-    public static final String EXCHANGE = "javatechie_exchange";
-    public static final String ROUTING_KEY = "javatechie_routingKey";
+    public static final String QUEUE = "account_queue";
+    public static final String EXCHANGE = "account_exchange";
+    public static final String ROUTING_KEY = "account_created";
 
     @Bean
     public Queue queue() {

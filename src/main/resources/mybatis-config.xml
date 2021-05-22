@@ -4,10 +4,12 @@
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
     <typeAliases>
-        <package name="com.mb.module.dto" />
+        <package name="com.mb.module.dto"/>
     </typeAliases>
 
     <mappers>
         <mapper resource="mappers/AccountMapper.xml"/>
+        <mapper resource="mappers/BalanceMapper.xml"/>
+        <mapper resource="mappers/TransactionMapper.xml"/>
     </mappers>
 </configuration>
