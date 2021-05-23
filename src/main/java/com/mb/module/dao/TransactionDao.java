@@ -1,6 +1,6 @@
 package com.mb.module.dao;
 
-import com.mb.module.dto.Transaction;
+import com.mb.module.dto.TransactionDto;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.List;
 @Mapper
 public interface TransactionDao {
 
-    void insert(Transaction transaction);
+    void insert(TransactionDto transaction);
 
-    List<Transaction> findById(Integer id);
+    List<TransactionDto> findById(Integer id);
 }

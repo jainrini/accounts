@@ -3,8 +3,8 @@ package com.mb.module.service;
 import com.mb.module.config.MessagingConfig;
 import com.mb.module.dao.AccountDao;
 import com.mb.module.dao.BalanceDao;
-import com.mb.module.dto.Account;
 import com.mb.module.dto.AccountCreationDto;
+import com.mb.module.dto.AccountDto;
 import com.mb.module.dto.BalanceDto;
 import com.mb.module.dto.validator.CurrencyValidator;
 import com.mb.module.exceptions.ApiException;
@@ -29,12 +29,12 @@ public class AccountService {
         this.template = template;
     }
 
-    public Account createAccount(AccountCreationDto dto) {
+    public AccountDto createAccount(AccountCreationDto dto) {
         List<String> currencies = dto.getCurrencies();
         validateCurrency(currencies);
         createAccountId(dto);
         createInitialBalancesWithZeroAmount(dto);
-        Account allCreatedBalancesForAccount = getAllCreatedBalancesForAccount(dto);
+        AccountDto allCreatedBalancesForAccount = getAllCreatedBalancesForAccount(dto);
         publishAccountsCreated(allCreatedBalancesForAccount);
         return allCreatedBalancesForAccount;
     }
@@ -44,9 +44,9 @@ public class AccountService {
         validator.validateListOfCurrency(currencies);
     }
 
-    private Account getAllCreatedBalancesForAccount(AccountCreationDto dto) {
+    private AccountDto getAllCreatedBalancesForAccount(AccountCreationDto dto) {
         List<BalanceDto> balances = balanceDao.findByAccountId(dto.getId());
-        return Account.builder()
+        return AccountDto.builder()
             .id(dto.getId())
             .balanceDtoList(balances)
             .customerId(dto.getCustomerId())
@@ -75,17 +75,17 @@ public class AccountService {
         return balanceDto;
     }
 
-    private void publishAccountsCreated(Account accountIds) {
+    private void publishAccountsCreated(AccountDto accountIds) {
         template.convertAndSend(MessagingConfig.EXCHANGE, MessagingConfig.ROUTING_KEY, accountIds);
     }
 
-    public Account getAccountById(Integer accountId) throws ApiException {
+    public AccountDto getAccountById(Integer accountId) throws ApiException {
         if (!isValidAccountId(accountId)) {
             throw new ApiException(format("Account Id %s not found", accountId));
         }
         List<BalanceDto> balances = balanceDao.findByAccountId(accountId);
         Integer customerId = balances.stream().map(v -> v.getCustomerId()).findAny().get();
-        return Account.builder()
+        return AccountDto.builder()
             .id(accountId)
             .balanceDtoList(balances)
             .customerId(customerId)

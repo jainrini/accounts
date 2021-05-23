@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class Account {
+public class AccountDto {
 
     private Integer id;
     private Integer customerId;

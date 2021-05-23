@@ -18,12 +18,13 @@
                 #{initialBalanceAmount},
                 #{balanceAfterTransaction})
     </insert>
-    <select id="findById" resultType="Transaction">
+    <select id="findById" resultType="TransactionDto">
         SELECT id,
-            description,
             account_id as "accountId",
+            amount as "amount",
             currency_code as "currencyCode",
             direction_code as "directionCode",
+            description as "description",
             initial_balance_amount as "initialBalanceAmount",
             balance_after_transaction as "balanceAfterTransaction"
         FROM accounts.account_transaction a

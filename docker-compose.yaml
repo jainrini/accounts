@@ -1,7 +1,7 @@
 version: '3.1'
 services:
   app:
-    container_name: account_module
+    container_name: accounts_module
     image: accountdemo
     build: ./
     ports:
@@ -11,6 +11,7 @@ services:
       - rabbitmq
   postgresqldb:
     image: postgres
+    container_name: accounts_postgres
     ports:
       - "5431:5432"
     environment:
@@ -19,6 +20,7 @@ services:
       - POSTGRES_DB=accounts_module_db
   rabbitmq:
     image: rabbitmq:management
+    container_name: accounts_rabbit
     ports:
       - "5672:5672"
       - "15672:15672"
