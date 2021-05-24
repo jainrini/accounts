@@ -52,14 +52,12 @@ public class TransactionService {
         return transaction;
     }
 
-    private void publishTransactionsToQueue(TransactionDto transaction) {
-        // rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, transaction);
-    }
-
     private TransactionDto createTransactionOut(BigDecimal initialBalanceAmount, TransactionDto transactionDto, BalanceDto balance) {
         BigDecimal amount = transactionDto.getAmount();
         if (initialBalanceAmount.compareTo(amount) < 0) {
-            throw new ApiException(format("Insufficient funds in account %s", transactionDto.getAccountId()));
+            throw new ApiException(
+                format("Insufficient funds in account %s", transactionDto.getAccountId())
+            );
         }
         BigDecimal newBalanceAmount = initialBalanceAmount.subtract(amount);
         return updateBalanceAndCreateTransaction(
