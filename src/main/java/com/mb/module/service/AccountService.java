@@ -8,24 +8,25 @@ import com.mb.module.dto.BalanceDto;
 import com.mb.module.enums.TransactionCurrency;
 import com.mb.module.exceptions.AccountNotFoundException;
 import com.mb.module.exceptions.ApiException;
+import com.mb.module.queue.MessageSender;
 import lombok.AllArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static com.mb.module.config.MessagingConfig.EXCHANGE;
-import static com.mb.module.config.MessagingConfig.ROUTING_KEY;
 import static java.lang.String.format;
 
 @Service
 @AllArgsConstructor
+@Transactional
 public class AccountService {
 
     private final AccountDao accountDao;
     private final BalanceDao balanceDao;
-    private final RabbitTemplate template;
+    private final MessageSender messageSender;
 
     public AccountDto createAccount(AccountCreationDto accountCreationDto) {
         accountDao.insert(accountCreationDto);
@@ -33,7 +34,7 @@ public class AccountService {
         createInitialBalancesWithZeroAmount(accountCreationDto);
 
         AccountDto accountWithBalances = getAllCreatedBalancesForAccount(accountCreationDto);
-        publishAccountsCreated(accountWithBalances);
+        messageSender.sendAccountCreationMessage(accountWithBalances);
         return accountWithBalances;
     }
 
@@ -49,22 +50,30 @@ public class AccountService {
     private void createInitialBalancesWithZeroAmount(AccountCreationDto accountCreationDto) {
         List<TransactionCurrency> currencies = accountCreationDto.getCurrencies();
         BalanceDto balanceDto = getBalanceDto(accountCreationDto);
+
         for (TransactionCurrency currency : currencies) {
             balanceDto.setCurrencyCode(currency);
-            balanceDao.createBalance(balanceDto);
+            try {
+                balanceDao.createBalance(balanceDto);
+            } catch (DuplicateKeyException ex) {
+                throw new ApiException(
+                    format("Balance for currency %s already exist for customer %s and country %s",
+                        currency,
+                        accountCreationDto.getCustomerId(),
+                        accountCreationDto.getCustomerId()
+                    )
+                );
+            }
         }
     }
 
     private BalanceDto getBalanceDto(AccountCreationDto accountCreationDto) {
-        BalanceDto balanceDto = new BalanceDto();
-        balanceDto.setBalanceAmount(BigDecimal.ZERO);
-        balanceDto.setAccountId(accountCreationDto.getId());
-        balanceDto.setCustomerId(accountCreationDto.getCustomerId());
-        return balanceDto;
-    }
-
-    private void publishAccountsCreated(AccountDto account) {
-        template.convertAndSend(EXCHANGE, ROUTING_KEY, account);
+        return BalanceDto.builder()
+            .balanceAmount(BigDecimal.ZERO)
+            .accountId(accountCreationDto.getId())
+            .countryCode(accountCreationDto.getCountryCode())
+            .customerId(accountCreationDto.getCustomerId())
+            .build();
     }
 
     public AccountDto getAccountById(Integer accountId) throws ApiException, AccountNotFoundException {

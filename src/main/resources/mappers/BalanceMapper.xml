@@ -5,10 +5,12 @@
     <insert id="createBalance">
         INSERT INTO accounts.balance (customer_id,
                                       currency_code,
+                                      country_code,
                                       account_id,
                                       balance_amount)
         VALUES (#{customerId},
                 #{currencyCode},
+                #{countryCode},
                 #{accountId},
                 #{balanceAmount})
     </insert>
@@ -23,8 +25,9 @@
         SELECT id,
             customer_id as "customerId",
             account_id as "accountId",
-               currency_code as "currencyCode",
-               balance_amount as "balanceAmount"
+            country_code as "countryCode",
+            currency_code as "currencyCode",
+            balance_amount as "balanceAmount"
         FROM accounts.balance b
         WHERE b.account_id = #{accountId}
     </select>
@@ -34,6 +37,7 @@
         SELECT id,
             customer_id as "customerId",
             account_id as "accountId",
+            country_code as "countryCode",
             currency_code as "currencyCode",
             balance_amount as "balanceAmount"
         FROM accounts.balance b

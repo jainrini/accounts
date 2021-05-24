@@ -15,13 +15,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MessagingConfig {
 
-    public static final String QUEUE = "account_queue";
-    public static final String EXCHANGE = "account_exchange";
-    public static final String ROUTING_KEY = "account_created";
+    public static final String ACCOUNT_CREATION = "queue.account.create";
+    public static final String TRANSACTION_CREATE = "queue.transaction.create";
+    public static final String EXCHANGE = "mb.exchange";
+    public static final String ACCOUNT_CREATE_KEY = "account.create";
+    public static final String TRANSACTION_CREATE_KEY = "transaction.created";
 
     @Bean
-    public Queue queue() {
-        return new Queue(QUEUE);
+    public Queue queue1() {
+        return new Queue(ACCOUNT_CREATION);
+    }
+
+    @Bean
+    public Queue queue2() {
+        return new Queue(TRANSACTION_CREATE);
     }
 
     @Bean
@@ -30,10 +37,14 @@ public class MessagingConfig {
     }
 
     @Bean
-    public Binding binding(Queue queue, TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    public Binding binding1(Queue queue1, TopicExchange exchange) {
+        return BindingBuilder.bind(queue1).to(exchange).with(ACCOUNT_CREATE_KEY);
     }
 
+    @Bean
+    public Binding binding2(Queue queue2, TopicExchange exchange) {
+        return BindingBuilder.bind(queue2).to(exchange).with(TRANSACTION_CREATE_KEY);
+    }
     @Bean
     public MessageConverter converter() {
         return new Jackson2JsonMessageConverter();

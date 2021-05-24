@@ -1,9 +1,11 @@
 package com.mb.module.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mb.module.dto.validator.ValidateCountryCode;
 import com.mb.module.enums.TransactionCurrency;
 import lombok.Data;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -18,6 +20,7 @@ public class AccountCreationDto {
     private Integer customerId;
 
     @NotNull
+    @ValidateCountryCode
     private String countryCode;
 
     @NotEmpty(message = "Currency cannot be empty.")

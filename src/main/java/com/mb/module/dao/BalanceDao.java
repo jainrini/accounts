@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Mapper
 public interface BalanceDao {
@@ -13,7 +14,7 @@ public interface BalanceDao {
 
     List<BalanceDto> findByAccountId(Integer accountId);
 
-    BalanceDto findByAccountIdAndCurrency(Integer accountId, String currencyCode);
+    Optional<BalanceDto> findByAccountIdAndCurrency(Integer accountId, String currencyCode);
 
     int update(BigDecimal newBalanceAmount, Integer balanceId);
 }

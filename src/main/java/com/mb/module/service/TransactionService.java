@@ -5,20 +5,17 @@ import com.mb.module.dto.AccountCreationDto;
 import com.mb.module.dto.BalanceDto;
 import com.mb.module.dto.TransactionCreationDto;
 import com.mb.module.dto.TransactionDto;
-import com.mb.module.enums.DirectionCode;
 import com.mb.module.enums.TransactionCurrency;
 import com.mb.module.exceptions.AccountNotFoundException;
 import com.mb.module.exceptions.ApiException;
+import com.mb.module.queue.MessageSender;
 import lombok.AllArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static com.mb.module.config.MessagingConfig.EXCHANGE;
-import static com.mb.module.config.MessagingConfig.ROUTING_KEY;
 import static java.lang.String.format;
 
 @Service
@@ -29,7 +26,7 @@ public class TransactionService {
     private final BalanceService balanceService;
     private final TransactionDao transactionDao;
     private final AccountService accountService;
-    private final RabbitTemplate rabbitTemplate;
+    private final MessageSender messageSender;
 
     public TransactionDto createTransaction(TransactionCreationDto transaction) throws AccountNotFoundException {
         TransactionDto transactionDto = buildTransactionDto(transaction);
@@ -56,7 +53,7 @@ public class TransactionService {
     }
 
     private void publishTransactionsToQueue(TransactionDto transaction) {
-        rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, transaction);
+        // rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, transaction);
     }
 
     private TransactionDto createTransactionOut(BigDecimal initialBalanceAmount, TransactionDto transactionDto, BalanceDto balance) {
@@ -82,7 +79,7 @@ public class TransactionService {
         );
     }
 
-    private TransactionDto updateBalanceAndCreateTransaction(
+    public TransactionDto updateBalanceAndCreateTransaction(
         TransactionDto transactionDto,
         BigDecimal initialBalanceAmount,
         BalanceDto balance,
@@ -92,6 +89,7 @@ public class TransactionService {
         transactionDto.setInitialBalanceAmount(initialBalanceAmount);
         transactionDto.setBalanceAfterTransaction(newBalanceAmount);
         transactionDao.insert(transactionDto);
+        messageSender.sendTransactionCreatedMessage(transactionDto);
         return transactionDto;
     }
 
@@ -110,24 +108,6 @@ public class TransactionService {
             .description(transaction.getDescription())
             .directionCode(transaction.getDirectionCode())
             .build();
-    }
-
-    private boolean isTransactionInValid(TransactionDto transaction) {
-        return transaction.getDirectionCode() == DirectionCode.IN;
-    }
-
-    private boolean isOutTransactionValid(TransactionDto transaction,
-                                          BigDecimal initialBalanceAmount
-    ) {
-        return transaction.getDirectionCode() == DirectionCode.OUT
-            && isValidAmount(transaction.getAmount(), initialBalanceAmount);
-    }
-
-    private boolean isValidAmount(BigDecimal amountDuringTransaction, BigDecimal initialBalanceAmount) {
-        if (!(amountDuringTransaction.compareTo(initialBalanceAmount) <= 0)) {
-            throw new ApiException("Insufficient Balance");
-        }
-        return false;
     }
 
     public List<TransactionDto> getTransactionById(Integer accountId) throws AccountNotFoundException {
