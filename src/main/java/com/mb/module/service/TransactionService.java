@@ -108,8 +108,8 @@ public class TransactionService {
             .build();
     }
 
-    public List<TransactionDto> getTransactionById(Integer accountId) throws AccountNotFoundException {
+    public List<TransactionDto> getTransactionByAccountId(Integer accountId) throws AccountNotFoundException {
         AccountCreationDto account = accountService.getAccountId(accountId);
-        return transactionDao.findById(account.getId());
+        return transactionDao.findByAccountId(account.getId());
     }
 }

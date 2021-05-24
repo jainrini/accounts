@@ -33,6 +33,6 @@ public class TransactionApi {
 
     @GetMapping("/transactions/{accountId}")
     public List<TransactionDto> getTransaction(@PathVariable Integer accountId) throws AccountNotFoundException {
-        return transactionService.getTransactionById(accountId);
+        return transactionService.getTransactionByAccountId(accountId);
     }
 }

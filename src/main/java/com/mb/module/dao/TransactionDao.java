@@ -10,5 +10,5 @@ public interface TransactionDao {
 
     void insert(TransactionDto transaction);
 
-    List<TransactionDto> findById(Integer id);
+    List<TransactionDto> findByAccountId(Integer accountId);
 }

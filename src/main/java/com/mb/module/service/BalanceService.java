@@ -29,8 +29,4 @@ public class BalanceService {
                                     Integer balanceId) {
         balanceDao.update(newBalanceAmount, balanceId);
     }
-
-    public void getByAccountId(Integer accountId) {
-        balanceDao.findByAccountId(accountId);
-    }
 }
