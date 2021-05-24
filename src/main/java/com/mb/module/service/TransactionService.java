@@ -1,57 +1,70 @@
 package com.mb.module.service;
 
 import com.mb.module.dao.TransactionDao;
+import com.mb.module.dto.AccountCreationDto;
 import com.mb.module.dto.BalanceDto;
 import com.mb.module.dto.TransactionCreationDto;
 import com.mb.module.dto.TransactionDto;
 import com.mb.module.enums.DirectionCode;
 import com.mb.module.enums.TransactionCurrency;
+import com.mb.module.exceptions.AccountNotFoundException;
 import com.mb.module.exceptions.ApiException;
+import lombok.AllArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.mb.module.config.MessagingConfig.EXCHANGE;
+import static com.mb.module.config.MessagingConfig.ROUTING_KEY;
+import static java.lang.String.format;
+
 @Service
+@AllArgsConstructor
 @Transactional
 public class TransactionService {
 
     private final BalanceService balanceService;
     private final TransactionDao transactionDao;
     private final AccountService accountService;
+    private final RabbitTemplate rabbitTemplate;
 
-    public TransactionService(BalanceService balanceService, TransactionDao transactionDao, AccountService accountService) {
-        this.balanceService = balanceService;
-        this.transactionDao = transactionDao;
-        this.accountService = accountService;
-    }
-
-    public TransactionDto createTransaction(TransactionCreationDto transaction) {
+    public TransactionDto createTransaction(TransactionCreationDto transaction) throws AccountNotFoundException {
         TransactionDto transactionDto = buildTransactionDto(transaction);
+        AccountCreationDto account = accountService.getAccountId(transaction.getAccountId());
 
-        Integer accountId = transactionDto.getAccountId();
-        if (!accountService.isValidAccountId(accountId)) {
-            throw new ApiException("AccountId not found");
-        }
-        BalanceDto balance = getExistingBalance(transaction.getCurrencyCode(), accountId);
+        BalanceDto balance = getExistingBalance(transaction.getCurrencyCode(), account.getId());
         return makeTransaction(transactionDto, balance);
     }
 
     private TransactionDto makeTransaction(TransactionDto transactionDto, BalanceDto balance) {
         BigDecimal initialBalanceAmount = balance.getBalanceAmount();
-        BigDecimal amountDuringTransaction = transactionDto.getAmount();
-
-        if (isTransactionInValid(transactionDto)) {
-            return createTransactionIn(initialBalanceAmount, transactionDto, balance);
-        } else if (isOutTransactionValid(transactionDto, initialBalanceAmount, amountDuringTransaction)) {
-            return createTransactionOut(initialBalanceAmount, transactionDto, balance);
+        TransactionDto transaction;
+        switch (transactionDto.getDirectionCode()) {
+            case IN:
+                transaction = createTransactionIn(initialBalanceAmount, transactionDto, balance);
+                break;
+            case OUT:
+                transaction = createTransactionOut(initialBalanceAmount, transactionDto, balance);
+                break;
+            default:
+                throw new ApiException("Not valid transaction");
         }
-        return null;
+        return transaction;
+    }
+
+    private void publishTransactionsToQueue(TransactionDto transaction) {
+        rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, transaction);
     }
 
     private TransactionDto createTransactionOut(BigDecimal initialBalanceAmount, TransactionDto transactionDto, BalanceDto balance) {
-        BigDecimal newBalanceAmount = initialBalanceAmount.subtract(transactionDto.getAmount());
+        BigDecimal amount = transactionDto.getAmount();
+        if (initialBalanceAmount.compareTo(amount) < 0) {
+            throw new ApiException(format("Insufficient funds in account %s", transactionDto.getAccountId()));
+        }
+        BigDecimal newBalanceAmount = initialBalanceAmount.subtract(amount);
         return updateBalanceAndCreateTransaction(
             transactionDto,
             initialBalanceAmount,
@@ -100,20 +113,14 @@ public class TransactionService {
     }
 
     private boolean isTransactionInValid(TransactionDto transaction) {
-        return transaction.getDirectionCode() == DirectionCode.IN
-            && !isNegativeAmount(transaction.getAmount());
-    }
-
-    private boolean isNegativeAmount(BigDecimal amount) {
-        return amount.compareTo(BigDecimal.ZERO) < 0;
+        return transaction.getDirectionCode() == DirectionCode.IN;
     }
 
     private boolean isOutTransactionValid(TransactionDto transaction,
-                                          BigDecimal initialBalanceAmount,
-                                          BigDecimal amountDuringTransaction
+                                          BigDecimal initialBalanceAmount
     ) {
         return transaction.getDirectionCode() == DirectionCode.OUT
-            && isValidAmount(amountDuringTransaction, initialBalanceAmount);
+            && isValidAmount(transaction.getAmount(), initialBalanceAmount);
     }
 
     private boolean isValidAmount(BigDecimal amountDuringTransaction, BigDecimal initialBalanceAmount) {
@@ -123,10 +130,8 @@ public class TransactionService {
         return false;
     }
 
-    public List<TransactionDto> getTransactionById(Integer accountId) {
-        if (!accountService.isValidAccountId(accountId)) {
-            throw new ApiException("AccountId not found");
-        }
-        return transactionDao.findById(accountId);
+    public List<TransactionDto> getTransactionById(Integer accountId) throws AccountNotFoundException {
+        AccountCreationDto account = accountService.getAccountId(accountId);
+        return transactionDao.findById(account.getId());
     }
 }

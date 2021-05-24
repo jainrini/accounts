@@ -11,5 +11,5 @@ public class AccountDto {
 
     private Integer id;
     private Integer customerId;
-    private List<BalanceDto> balanceDtoList;
+    private List<BalanceDto> balances;
 }

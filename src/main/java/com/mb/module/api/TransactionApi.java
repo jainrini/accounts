@@ -2,6 +2,7 @@ package com.mb.module.api;
 
 import com.mb.module.dto.TransactionCreationDto;
 import com.mb.module.dto.TransactionDto;
+import com.mb.module.exceptions.AccountNotFoundException;
 import com.mb.module.service.TransactionService;
 import io.swagger.annotations.Api;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,12 +27,12 @@ public class TransactionApi {
     }
 
     @PostMapping("/transactions")
-    public TransactionDto createTransaction(@RequestBody @Valid TransactionCreationDto transaction) {
+    public TransactionDto createTransaction(@RequestBody @Valid TransactionCreationDto transaction) throws AccountNotFoundException {
         return transactionService.createTransaction(transaction);
     }
 
     @GetMapping("/transactions/{accountId}")
-    public List<TransactionDto> getTransaction(@PathVariable Integer accountId) {
+    public List<TransactionDto> getTransaction(@PathVariable Integer accountId) throws AccountNotFoundException {
         return transactionService.getTransactionById(accountId);
     }
 }

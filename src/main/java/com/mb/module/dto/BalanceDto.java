@@ -1,6 +1,7 @@
 package com.mb.module.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mb.module.enums.TransactionCurrency;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,5 +15,5 @@ public class BalanceDto {
     @JsonIgnore
     private Integer customerId;
     private BigDecimal balanceAmount;
-    private String currencyCode;
+    private TransactionCurrency currencyCode;
 }

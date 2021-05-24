@@ -1,6 +1,5 @@
 package com.mb.module.dto.validator;
 
-import com.mb.module.enums.DirectionCode;
 import com.mb.module.enums.TransactionCurrency;
 
 import javax.validation.Constraint;
@@ -13,11 +12,15 @@ import java.lang.annotation.Target;
 
 @Documented
 @Constraint(validatedBy = CurrencyValidator.class)
-@Target( { ElementType.FIELD })
+@Target({ ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidateCurrency {
+
     TransactionCurrency[] anyOf();
+
     String message() default "Invalid Transaction currency";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }
