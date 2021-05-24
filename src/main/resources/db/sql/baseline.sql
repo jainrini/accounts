@@ -37,4 +37,7 @@ CREATE TABLE accounts.account_transaction (
 );
 
 
+CREATE INDEX account_transaction_accountId_idx ON accounts.account_transaction USING btree(account_id);
+
+CREATE INDEX balance_account_id_currency_code_idx ON accounts.balance USING btree(account_id, currency_code);
 
