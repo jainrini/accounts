@@ -17,7 +17,7 @@ Build Jar
 
 ### Running application with Docker and IntelliJ
 1. Build docker image
-`docker build --build-arg JAR_FILE=build/libs/\*.jar -t accountdemo .`
+`docker build -t accounts .`
 
 ### Start the application containers:
 1. Run `docker-compose up` to get all containers up(Springboot application, Rabbit, Postgres)
