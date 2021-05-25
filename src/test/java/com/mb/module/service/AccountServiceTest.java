@@ -88,7 +88,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    public void getAccountById_Returns_ptionExce() throws ApiException, AccountNotFoundException {
+    public void getAccountById_ThrowsAccountNotFoundException_IfAccountIdNotFound() throws ApiException, AccountNotFoundException {
         Integer accountId = Integer.valueOf(1);
 
         when(accountDao.findByAccountId(accountId)).thenReturn(Optional.empty());
