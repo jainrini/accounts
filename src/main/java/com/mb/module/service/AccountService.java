@@ -1,7 +1,6 @@
 package com.mb.module.service;
 
 import com.mb.module.dao.AccountDao;
-import com.mb.module.dao.BalanceDao;
 import com.mb.module.dto.AccountCreationDto;
 import com.mb.module.dto.AccountDto;
 import com.mb.module.dto.BalanceDto;
@@ -10,7 +9,6 @@ import com.mb.module.exceptions.AccountNotFoundException;
 import com.mb.module.exceptions.ApiException;
 import com.mb.module.queue.MessageSender;
 import lombok.AllArgsConstructor;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +23,7 @@ import static java.lang.String.format;
 public class AccountService {
 
     private final AccountDao accountDao;
-    private final BalanceDao balanceDao;
+    private final BalanceService balanceService;
     private final MessageSender messageSender;
 
     public AccountDto createAccount(AccountCreationDto accountCreationDto) {
@@ -39,7 +37,7 @@ public class AccountService {
     }
 
     private AccountDto getAllCreatedBalancesForAccount(AccountCreationDto dto) {
-        List<BalanceDto> balances = balanceDao.findByAccountId(dto.getId());
+        List<BalanceDto> balances = balanceService.findByAccountId(dto.getId());
         return AccountDto.builder()
             .id(dto.getId())
             .balances(balances)
@@ -53,17 +51,7 @@ public class AccountService {
 
         for (TransactionCurrency currency : currencies) {
             balanceDto.setCurrencyCode(currency);
-            try {
-                balanceDao.createBalance(balanceDto);
-            } catch (DuplicateKeyException ex) {
-                throw new ApiException(
-                    format("Balance for currency %s already exist for customer %s and country %s",
-                        currency,
-                        accountCreationDto.getCustomerId(),
-                        accountCreationDto.getCustomerId()
-                    )
-                );
-            }
+            balanceService.createBalance(balanceDto);
         }
     }
 
@@ -79,7 +67,7 @@ public class AccountService {
     public AccountDto getAccountById(Integer accountId) throws ApiException, AccountNotFoundException {
         AccountCreationDto accounts = getAccountId(accountId);
 
-        List<BalanceDto> balances = balanceDao.findByAccountId(accounts.getId());
+        List<BalanceDto> balances = balanceService.findByAccountId(accounts.getId());
         Integer customerId = balances.stream().map(v -> v.getCustomerId()).findAny().get();
         return AccountDto.builder()
             .id(accountId)
@@ -91,7 +79,7 @@ public class AccountService {
     public AccountCreationDto getAccountId(Integer accountId) throws AccountNotFoundException {
         return accountDao.findByAccountId(accountId)
             .orElseThrow(() -> new AccountNotFoundException(
-                format("AccountId %s not found", accountId)
+                format("Account id %s not found", accountId)
             ));
     }
 }

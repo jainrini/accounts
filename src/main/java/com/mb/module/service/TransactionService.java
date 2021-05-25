@@ -88,6 +88,7 @@ public class TransactionService {
         transactionDto.setBalanceAfterTransaction(newBalanceAmount);
         transactionDao.insert(transactionDto);
         messageSender.sendTransactionCreatedMessage(transactionDto);
+
         return transactionDto;
     }
 
